@@ -1,0 +1,86 @@
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+def largestRectangleArea_brute_force(heights: list[int]) -> int:
+    max_area = 0
+    n = len(heights)
+    for i in range(n):
+        min_height = heights[i]
+        for j in range(i, n):
+            min_height = min(min_height, heights[j])
+            width = j - i + 1
+            max_area = max(max_area, min_height * width)
+    return max_area
+
+def largestRectangleArea_optimal(heights: list[int]) -> tuple[int, tuple[int, int, int]]:
+
+    stack = []  # Stack will store tuples of (index, height)
+    max_area = 0
+    max_coords = (0, 0, 0) # (start, end, height)
+
+    extended_heights = heights + [0]
+
+    for i, h in enumerate(extended_heights):
+        start_index = i
+        while stack and stack[-1][1] > h:
+            pop_index, pop_height = stack.pop()
+            width = i - pop_index
+            current_area = pop_height * width
+            
+            if current_area > max_area:
+                max_area = current_area
+                max_coords = (pop_index, i - 1, pop_height)
+            start_index = pop_index
+            
+        stack.append((start_index, h))
+    return max_area, max_coords
+
+def visualize_histogram_and_largest_rectangle(heights: list[int]):
+  
+    if not heights:
+        print("Cannot visualize an empty histogram.")
+        return
+
+    max_area, coords = largestRectangleArea_optimal(heights)
+    start_idx, end_idx, rect_height = coords
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    # Plot the histogram bars
+    x_values = range(len(heights))
+    ax.bar(x_values, heights, width=1.0, edgecolor='black', color='lightblue', label='Histogram Bars')
+
+    # Create and add the largest rectangle patch
+    rect_width = (end_idx - start_idx + 1)
+    rectangle = patches.Rectangle(
+        (start_idx - 0.5, 0),  # Start from the left edge of the first bar
+        rect_width,
+        rect_height,
+        linewidth=2,
+        edgecolor='red',
+        facecolor='red',
+        alpha=0.4,
+        label=f'Largest Rectangle (Area: {max_area})'
+    )
+    ax.add_patch(rectangle)
+
+    ax.set_title('Largest Rectangle in a Histogram', fontsize=16)
+    ax.set_xlabel('Bar Index', fontsize=12)
+    ax.set_ylabel('Height', fontsize=12)
+    ax.set_xticks(x_values)
+    ax.legend()
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.show()
+
+heights = [2, 1, 5, 6, 2, 3]
+
+print(f"--- Largest Rectangle in Histogram ---")
+print(f"Input Histogram: {heights}\n")
+
+area_brute = largestRectangleArea_brute_force(heights)
+area_optimal, _ = largestRectangleArea_optimal(heights)
+
+print(f"Result (Brute Force O(n^2)): {area_brute}")
+print(f"Result (Optimal Stack O(n)): {area_optimal}\n")
+
+print("Generating visualization...")
+visualize_histogram_and_largest_rectangle(heights)
